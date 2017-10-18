@@ -11,6 +11,7 @@
                  [org.clojure/core.async "0.3.443"]
 
                  [aleph "0.4.3"]
+                 [manifold "0.1.7-alpha6"]
                  [yogthos/config "0.8"]
                  [com.stuartsierra/component "0.3.2"]
 
@@ -22,7 +23,7 @@
                  [one-time "0.2.0"]
                  [clj-crypto "1.0.2"
                   :exclusions [org.bouncycastle/bcprov-jdk15on bouncycastle/bcprov-jdk16]]
-                 [clj-time "0.11.0"]
+                 [clj-time "0.14.0"]
                  [tick "0.3.0"]
 
                  [org.clojure/tools.logging "0.3.1"]
@@ -31,7 +32,7 @@
                  [org.springframework.amqp/spring-rabbit "2.0.0.RELEASE"
                   :exclusions [org.springframework/spring-web org.springframework/spring-tx]]
 
-                 [com.novemberain/langohr "3.6.1"]]
+                 [com.novemberain/langohr "5.0.0-SNAPSHOT"]]
 
 
   :uberjar-name "logging.jar"
