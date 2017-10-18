@@ -10,6 +10,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/core.async "0.3.443"]
 
+                 [yada "1.2.9"]
                  [aleph "0.4.3"]
                  [manifold "0.1.7-alpha6"]
                  [yogthos/config "0.8"]
