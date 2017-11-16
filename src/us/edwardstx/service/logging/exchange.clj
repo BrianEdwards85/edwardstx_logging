@@ -10,45 +10,24 @@
             [langohr.channel   :as lch]
             [langohr.consumers :as lc]))
 
-(defn rcv-msg [stream ch {:keys [delivery-tag message-id content-encoding] :as meta} ^bytes payload]
-  (let [body (String. payload content-encoding)
+(defn rcv-msg [stream ch {:keys [delivery-tag message-id] :as meta} ^bytes payload]
+  (let [body (String. payload)
         ack #(lb/ack ch delivery-tag)]
     (->
      (s/put! stream (assoc meta :body body :ack ack))
      (d/chain #(if (not %) (lb/nack ch delivery-tag false true)))
      )))
 
-(defn consume [this f]
-  (s/consume f (:stream this)))
+(defn create-queue [rabbitmq key]
+  (let [channel (get-channel rabbitmq)
+        exchange-name (get-in rabbitmq [:conf :conf key :exchange])
+        queue-name (get-in rabbitmq [:conf :conf key :queue])
+        stream (s/stream 20)]
+    (s/on-closed stream #(rmq/close channel))
+    (le/declare channel exchange-name "topic" {:durable true :auto-delete false})
+    (lq/declare channel queue-name {:exclusive false :auto-delete false :durable true :arguments {"x-message-ttl" 14400000}})
+    (lq/bind channel queue-name exchange-name {:routing-key "#"})
+    (lc/subscribe channel queue-name (partial rcv-msg stream) {:auto-ack false})
+    stream)
+  )
 
-(defrecord RabbitExchange [rabbitmq conf channel exchange queue stream]
-  component/Lifecycle
-
-  (start [this]
-    (let [channel (get-channel rabbitmq)
-          exchange-name (-> conf :conf :logging :exchange)
-          exchange (le/declare channel exchange-name "topic" {:durable true :auto-delete false})
-          queue-name (-> conf :conf :logging :queue)
-          queue (lq/declare channel queue-name {:exclusive false :auto-delete false})
-          stream (s/stream 20)]
-      (lq/bind channel queue-name exchange-name {:routing-key "#"})
-      (lc/subscribe channel queue-name (partial rcv-msg stream) {:auto-ack false})
-      (assoc this
-             :stream stream
-             :channel channel
-             :exchange exchange
-             :queue queue)))
-
-  (stop [this]
-    (rmq/close channel)
-    (s/close! stream)
-    (assoc this
-           :stream nil
-           :channel nil
-           :exchange nil
-           :queue nil)))
-
-(defn new-rabbit-exchange []
-  (component/using
-   (map->RabbitExchange {})
-   [:rabbitmq :conf]))
